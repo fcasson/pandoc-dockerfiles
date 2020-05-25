@@ -1,7 +1,6 @@
 FROM ubuntu:focal AS ubuntu-builder-common
 
 ENV DEBIAN_FRONTEND noninteractive
-ENV DEBIAN_PRIORITY critical
 
 WORKDIR /app
 
@@ -63,15 +62,13 @@ LABEL org.pandoc.maintainer='Albert Krewinkel <albert+pandoc@zeitkraut.de>'
 LABEL org.pandoc.author "John MacFarlane"
 LABEL org.pandoc.version "$pandoc_version"
 
-ENV DEBIAN_FRONTEND noninteractive
-ENV DEBIAN_PRIORITY critical
-
 COPY --from=ubuntu-builder \
   /usr/local/bin/pandoc \
   /usr/local/bin/pandoc-citeproc \
   /usr/local/bin/
 RUN apt-get -q --no-allow-insecure-repositories update \
-  && apt-get install --assume-yes --no-install-recommends \
+  && DEBIAN_FRONTEND=noninteractive \
+     apt-get install --assume-yes --no-install-recommends \
        ca-certificates=* \
        liblua5.3-0=5.3.3* \
        lua-lpeg=1.0.* \
