@@ -11,7 +11,7 @@ RUN apt-get -q --no-allow-insecure-repositories update \
   && add-apt-repository ppa:hvr/ghc \
   && apt-get install --assume-yes --no-install-recommends \
        ghc-8.8.3=8.8.3-* \
-       cabal-install-3.0=3.* \
+       cabal-install-3.2=3.2* \
        build-essential=12.8* \
        ca-certificates=* \
        curl=* \
@@ -23,7 +23,7 @@ RUN apt-get -q --no-allow-insecure-repositories update \
        zlib1g-dev=1:1.2.11.* \
   && rm -rf /var/lib/apt/lists/* \
   && ln -s /opt/ghc/bin/ghc-8.8.3 /usr/bin/ghc \
-  && ln -s /opt/cabal/bin/cabal-3.0 /usr/bin/cabal
+  && ln -s /opt/cabal/bin/cabal-3.2 /usr/bin/cabal
 
 COPY cabal.root.config /root/.cabal/config
 RUN  cabal --version \
