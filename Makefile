@@ -15,6 +15,10 @@ endif
 # it is from the repository root.
 makefile_dir := $(dir $(realpath Makefile))
 
+# The freeze file fixes the versions of Haskell packages used to compile a
+# specific version. This enables reproducible builds.
+freeze_file := $(makefile_dir)/freeze/pandoc-$(PANDOC_VERSION).project.freeze
+
 # Keep this target first so that `make` with no arguments will print this rather
 # than potentially engaging in expensive builds.
 .PHONY: show-args
@@ -42,6 +46,33 @@ test-alpine:
 test-alpine-latex: IMAGE ?= pandoc/latex:$(PANDOC_VERSION)
 test-alpine-latex:
 	IMAGE=$(IMAGE) make -C test test-latex
+
+################################################################################
+# Ubuntu images and tests                                                      #
+################################################################################
+.PHONY: ubuntu test-ubuntu ubuntu-freeze
+ubuntu: $(freeze_file)
+	docker build \
+	    --tag pandoc/ubuntu-core:$(PANDOC_VERSION) \
+	    --build-arg pandoc_commit=$(PANDOC_COMMIT) \
+	    --build-arg pandoc_version=$(PANDOC_VERSION) \
+	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
+
+ubuntu-freeze: $(freeze_file)
+
+$(freeze_file): freeze/pandoc-freeze.sh
+	docker build \
+	    --tag pandoc/ubuntu-builder \
+	    --target=ubuntu-builder \
+	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
+	docker run --rm -it \
+	    -v "$(makefile_dir)/freeze:/app" \
+	    pandoc/ubuntu-builder \
+	    sh /app/pandoc-freeze.sh $(PANDOC_VERSION) "$(shell id -u):$(shell id -g)"
+
+test-ubuntu: IMAGE ?= pandoc/ubuntu-core:$(PANDOC_VERSION)
+test-ubuntu:
+	IMAGE=$(IMAGE) make -C test test-core
 
 ################################################################################
 # Developer targets                                                            #

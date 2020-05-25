@@ -1,0 +1,85 @@
+FROM ubuntu:focal AS ubuntu-builder-common
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_PRIORITY critical
+
+WORKDIR /app
+
+RUN apt-get -q --no-allow-insecure-repositories update \
+  && apt-get install --assume-yes --no-install-recommends \
+       software-properties-common \
+  && add-apt-repository ppa:hvr/ghc \
+  && apt-get install --assume-yes --no-install-recommends \
+       ghc-8.8.3=8.8.3-* \
+       cabal-install-3.0=3.* \
+       build-essential=12.8* \
+       ca-certificates=* \
+       curl=* \
+       fakeroot=* \
+       git \
+       libgmp-dev=2:6.* \
+       liblua5.3-dev=5.3.3* \
+       pkg-config=0.29.1* \
+       zlib1g-dev=1:1.2.11.* \
+  && rm -rf /var/lib/apt/lists/* \
+  && ln -s /opt/ghc/bin/ghc-8.8.3 /usr/bin/ghc \
+  && ln -s /opt/cabal/bin/cabal-3.0 /usr/bin/cabal
+
+COPY cabal.root.config /root/.cabal/config
+RUN  cabal --version \
+  && ghc --version \
+  && cabal new-update
+
+# Actual builder
+FROM ubuntu-builder-common as ubuntu-builder
+ARG pandoc_commit=master
+RUN git clone --branch=$pandoc_commit --depth=1 --quiet \
+  https://github.com/jgm/pandoc /usr/src/pandoc
+
+COPY ./freeze/pandoc-$pandoc_commit.project.freeze \
+     /usr/src/pandoc/cabal.project.freeze
+
+# Install Haskell dependencies
+WORKDIR /usr/src/pandoc
+RUN  cabal new-update \
+  && cabal new-clean \
+  && printf "extra-packages: pandoc-crossref\n" > cabal.project.local \
+  && cabal new-install \
+      --disable-tests \
+      --jobs \
+      --installdir=/usr/local/bin \
+      --install-method=copy \
+      . pandoc-citeproc pandoc-crossref
+
+# Cabal's exec stripping doesn't seem to work reliably, let's do it here.
+RUN strip /usr/local/bin/pandoc \
+          /usr/local/bin/pandoc-citeproc \
+          /usr/local/bin/pandoc-crossref
+
+FROM ubuntu:focal AS focal-pandoc
+ARG pandoc_version=edge
+LABEL maintainer='Albert Krewinkel <albert+pandoc@zeitkraut.de>'
+LABEL org.pandoc.maintainer='Albert Krewinkel <albert+pandoc@zeitkraut.de>'
+LABEL org.pandoc.author "John MacFarlane"
+LABEL org.pandoc.version "$pandoc_version"
+
+ENV DEBIAN_FRONTEND noninteractive
+ENV DEBIAN_PRIORITY critical
+
+COPY --from=ubuntu-builder \
+  /usr/local/bin/pandoc* \
+  /usr/local/bin/
+RUN apt-get -q --no-allow-insecure-repositories update \
+  && apt-get install --assume-yes --no-install-recommends \
+       ca-certificates=* \
+       liblua5.3-0=5.3.3* \
+       lua-lpeg=1.0.* \
+       libatomic1=10* \
+       libgmp10=2:6.* \
+       libpcre3=2:8.39-* \
+       libyaml-0-2=0.2.* \
+       zlib1g=1:1.2.11.* \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /data
+ENTRYPOINT ["/usr/local/bin/pandoc"]
