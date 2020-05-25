@@ -41,20 +41,20 @@ COPY ./freeze/pandoc-$pandoc_commit.project.freeze \
 
 # Install Haskell dependencies
 WORKDIR /usr/src/pandoc
-RUN  cabal new-update \
-  && cabal new-clean \
-  && printf "extra-packages: pandoc-crossref\n" > cabal.project.local \
-  && cabal new-install \
+# Add pandoc-crossref to project
+ARG without_crossref=
+RUN test -n "$without_crossref" || \
+    printf "extra-packages: pandoc-crossref\n" > cabal.project.local;
+RUN cabal new-install \
       --disable-tests \
       --jobs \
       --installdir=/usr/local/bin \
       --install-method=copy \
-      . pandoc-citeproc pandoc-crossref
+      . pandoc-citeproc \
+      $(test -n "$without_crossref" || printf pandoc-crossref)
 
 # Cabal's exec stripping doesn't seem to work reliably, let's do it here.
-RUN strip /usr/local/bin/pandoc \
-          /usr/local/bin/pandoc-citeproc \
-          /usr/local/bin/pandoc-crossref
+RUN strip /usr/local/bin/pandoc*
 
 FROM ubuntu:focal AS focal-pandoc
 ARG pandoc_version=edge

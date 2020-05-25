@@ -6,6 +6,12 @@ else
 PANDOC_COMMIT          ?= $(PANDOC_VERSION)
 endif
 
+# Variable controlling whether pandoc-crossref should not be included in
+# the image. Useful when building new pandoc versions for which there is
+# no compatible pandoc-crossref version available. Setting this to a
+# non-empty string prevents pandoc-crossref from being built.
+WITHOUT_CROSSREF ?= ""
+
 # Used to specify the build context path for Docker.  Note that we are
 # specifying the repository root so that we can
 #
@@ -17,7 +23,7 @@ makefile_dir := $(dir $(realpath Makefile))
 
 # The freeze file fixes the versions of Haskell packages used to compile a
 # specific version. This enables reproducible builds.
-freeze_file := $(makefile_dir)/freeze/pandoc-$(PANDOC_VERSION).project.freeze
+freeze_file := $(makefile_dir)/freeze/pandoc-$(PANDOC_COMMIT).project.freeze
 
 # Keep this target first so that `make` with no arguments will print this rather
 # than potentially engaging in expensive builds.
@@ -56,6 +62,7 @@ ubuntu: $(freeze_file)
 	    --tag pandoc/ubuntu-core:$(PANDOC_VERSION) \
 	    --build-arg pandoc_commit=$(PANDOC_COMMIT) \
 	    --build-arg pandoc_version=$(PANDOC_VERSION) \
+	    --build-arg without_crossref=$(WITHOUT_CROSSREF) \
 	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
 
 ubuntu-freeze: $(freeze_file)
