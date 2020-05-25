@@ -36,7 +36,7 @@ ARG pandoc_commit=master
 RUN git clone --branch=$pandoc_commit --depth=1 --quiet \
   https://github.com/jgm/pandoc /usr/src/pandoc
 
-COPY ./freeze/pandoc-$pandoc_commit.project.freeze \
+COPY ./ubuntu/freeze/pandoc-$pandoc_commit.project.freeze \
      /usr/src/pandoc/cabal.project.freeze
 
 # Install Haskell dependencies

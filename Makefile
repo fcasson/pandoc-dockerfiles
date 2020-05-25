@@ -23,7 +23,7 @@ makefile_dir := $(dir $(realpath Makefile))
 
 # The freeze file fixes the versions of Haskell packages used to compile a
 # specific version. This enables reproducible builds.
-freeze_file := $(makefile_dir)/freeze/pandoc-$(PANDOC_COMMIT).project.freeze
+ubuntu_freeze_file := ubuntu/freeze/pandoc-$(PANDOC_COMMIT).project.freeze
 
 # Keep this target first so that `make` with no arguments will print this rather
 # than potentially engaging in expensive builds.
@@ -56,8 +56,8 @@ test-alpine-latex:
 ################################################################################
 # Ubuntu images and tests                                                      #
 ################################################################################
-.PHONY: ubuntu test-ubuntu ubuntu-freeze
-ubuntu: $(freeze_file)
+.PHONY: ubuntu test-ubuntu ubuntu-freeze-file
+ubuntu: $(ubuntu_freeze_file)
 	docker build \
 	    --tag pandoc/ubuntu:$(PANDOC_VERSION) \
 	    --build-arg pandoc_commit=$(PANDOC_COMMIT) \
@@ -75,17 +75,18 @@ ubuntu-crossref: ubuntu
 	    --target focal-pandoc-crossref \
 	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
 
-ubuntu-freeze: $(freeze_file)
+ubuntu-freeze-file: $(ubuntu_freeze_file)
 
-$(freeze_file): freeze/pandoc-freeze.sh
+$(ubuntu_freeze_file): common/pandoc-freeze.sh
 	docker build \
 	    --tag pandoc/ubuntu-builder \
-	    --target=ubuntu-builder \
+	    --target=ubuntu-builder-common \
 	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
 	docker run --rm -it \
-	    -v "$(makefile_dir)/freeze:/app" \
+	    -v "$(makefile_dir):/app" \
 	    pandoc/ubuntu-builder \
-	    sh /app/pandoc-freeze.sh $(PANDOC_VERSION) "$(shell id -u):$(shell id -g)"
+	    sh /app/$< $(PANDOC_VERSION) "$(shell id -u):$(shell id -g)" \
+	       /app/$(ubuntu_freeze_file)
 
 test-ubuntu: IMAGE ?= pandoc/ubuntu-core:$(PANDOC_VERSION)
 test-ubuntu:

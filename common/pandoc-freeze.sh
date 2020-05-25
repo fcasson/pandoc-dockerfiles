@@ -18,14 +18,16 @@ usage ()
     printf "Parameters:\n"
     printf "  PANDOC_VERSION: targeted pandoc version, e.g. 2.9.2.1\n"
     printf "  FILE_OWNER: owner of the new freeze file, e.g. 1000:1000\n\n"
+    printf "  TARGET_FILE: target file name\n"
     printf "NOTE: This script is designed to run in a Docker container. The\n"
     printf "freeze file will be created in the '/app' directory.\n"
 }
 # Bail unless the script is called with exactly two parameters
-[ $# -eq 2 ] || ( usage 1>&2; exit 1 )
+[ $# -eq 3 ] || ( usage 1>&2; exit 1 )
 
 pandoc_version="$1"
 file_owner="$2"
+target_file="$3"
 
 tmpdir=$(mktemp -p /tmp -d pandoc-freeze.XXXXXX)
 cd "${tmpdir}"
@@ -65,7 +67,6 @@ cabal new-freeze \
       --constraint="pandoc-citeproc ${pandoc_citeproc_constraints}" \
       --constraint="hslua ${hslua_constraints}"
 
-target_file=/app/pandoc-${pandoc_version}.project.freeze
 printf "Copying freeze file to %s\n" "${target_file}"
 cp cabal.project.freeze "${target_file}"
 printf "Changing freeze file owner to %s\n" "${file_owner}"
