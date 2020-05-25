@@ -59,10 +59,20 @@ test-alpine-latex:
 .PHONY: ubuntu test-ubuntu ubuntu-freeze
 ubuntu: $(freeze_file)
 	docker build \
-	    --tag pandoc/ubuntu-core:$(PANDOC_VERSION) \
+	    --tag pandoc/ubuntu:$(PANDOC_VERSION) \
 	    --build-arg pandoc_commit=$(PANDOC_COMMIT) \
 	    --build-arg pandoc_version=$(PANDOC_VERSION) \
 	    --build-arg without_crossref=$(WITHOUT_CROSSREF) \
+	    --target focal-pandoc \
+	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
+
+ubuntu-crossref: ubuntu
+	docker build \
+	    --tag pandoc/ubuntu-crossref:$(PANDOC_VERSION) \
+	    --build-arg pandoc_commit=$(PANDOC_COMMIT) \
+	    --build-arg pandoc_version=$(PANDOC_VERSION) \
+	    --build-arg without_crossref=$(WITHOUT_CROSSREF) \
+	    --target focal-pandoc-crossref \
 	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
 
 ubuntu-freeze: $(freeze_file)

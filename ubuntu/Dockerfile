@@ -67,7 +67,8 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV DEBIAN_PRIORITY critical
 
 COPY --from=ubuntu-builder \
-  /usr/local/bin/pandoc* \
+  /usr/local/bin/pandoc \
+  /usr/local/bin/pandoc-citeproc \
   /usr/local/bin/
 RUN apt-get -q --no-allow-insecure-repositories update \
   && apt-get install --assume-yes --no-install-recommends \
@@ -83,3 +84,8 @@ RUN apt-get -q --no-allow-insecure-repositories update \
 
 WORKDIR /data
 ENTRYPOINT ["/usr/local/bin/pandoc"]
+
+FROM focal-pandoc AS focal-pandoc-crossref
+COPY --from=ubuntu-builder \
+  /usr/local/bin/pandoc-crossref \
+  /usr/local/bin/
