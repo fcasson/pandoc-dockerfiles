@@ -14,7 +14,7 @@ set -e
 usage ()
 {
     printf "Generate a cabal freeze file for a given pandoc version\n\n"
-    printf "Usage: $0 PANDOC_VERSION FILE_OWNER\n\n"
+    printf "Usage: %s PANDOC_VERSION FILE_OWNER\n\n" "$0"
     printf "Parameters:\n"
     printf "  PANDOC_VERSION: targeted pandoc version, e.g. 2.9.2.1\n"
     printf "  FILE_OWNER: owner of the new freeze file, e.g. 1000:1000\n\n"
