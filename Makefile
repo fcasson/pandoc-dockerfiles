@@ -56,7 +56,7 @@ test-alpine-latex:
 ################################################################################
 # Ubuntu images and tests                                                      #
 ################################################################################
-.PHONY: ubuntu test-ubuntu ubuntu-freeze-file
+.PHONY: ubuntu ubuntu-crossref ubuntu-latex ubuntu-freeze-file
 ubuntu: $(ubuntu_freeze_file)
 	docker build \
 	    --tag pandoc/ubuntu:$(PANDOC_VERSION) \
@@ -94,9 +94,14 @@ $(ubuntu_freeze_file): common/pandoc-freeze.sh
 	    sh /app/$< $(PANDOC_VERSION) "$(shell id -u):$(shell id -g)" \
 	       /app/$(ubuntu_freeze_file)
 
+.PHONY: test-ubuntu test-ubuntu-latex
 test-ubuntu: IMAGE ?= pandoc/ubuntu-core:$(PANDOC_VERSION)
 test-ubuntu:
 	IMAGE=$(IMAGE) make -C test test-core
+
+test-ubuntu-latex: IMAGE ?= pandoc/ubuntu-latex:$(PANDOC_VERSION)
+test-ubuntu-latex:
+	IMAGE=$(IMAGE) make -C test test-latex
 
 ################################################################################
 # Developer targets                                                            #
