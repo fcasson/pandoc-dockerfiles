@@ -44,13 +44,16 @@ WORKDIR /usr/src/pandoc
 ARG without_crossref=
 RUN test -n "$without_crossref" || \
     printf "extra-packages: pandoc-crossref\n" > cabal.project.local;
-RUN cabal new-install \
+RUN cabal new-update \
+  && cabal new-build \
       --disable-tests \
       --jobs \
-      --installdir=/usr/local/bin \
-      --install-method=copy \
       . pandoc-citeproc \
       $(test -n "$without_crossref" || printf pandoc-crossref)
+
+RUN find dist-newstyle \
+         -name 'pandoc*' -type f -perm -u+x \
+         -exec cp '{}' /usr/local/bin/ ';'
 
 # Cabal's exec stripping doesn't seem to work reliably, let's do it here.
 RUN strip /usr/local/bin/pandoc*
