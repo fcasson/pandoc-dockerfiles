@@ -75,6 +75,12 @@ ubuntu-crossref: ubuntu
 	    --target focal-pandoc-crossref \
 	    -f $(makefile_dir)/ubuntu/Dockerfile $(makefile_dir)
 
+ubuntu-latex: ubuntu-crossref
+	docker build \
+	    --tag pandoc/ubuntu-latex:$(PANDOC_VERSION) \
+	    --build-arg base_tag=$(PANDOC_VERSION) \
+	    -f $(makefile_dir)/ubuntu/latex.Dockerfile $(makefile_dir)
+
 ubuntu-freeze-file: $(ubuntu_freeze_file)
 
 $(ubuntu_freeze_file): common/pandoc-freeze.sh
