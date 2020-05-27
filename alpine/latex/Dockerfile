@@ -1,4 +1,4 @@
-ARG base_tag="edge"
+ARG base_tag="2.9.2"
 FROM pandoc/core:${base_tag}
 
 # NOTE: `libsrvg`, pandoc uses `rsvg-convert` for working with svg images.
@@ -12,7 +12,23 @@ RUN apk --no-cache add \
         perl \
         tar \
         wget \
-        xz
+        xz \
+	make \
+	bash \
+	python3 \
+        python3-dev
+	
+RUN pip3  install --no-cache-dir --upgrade pip \
+  && pip3 install --no-cache-dir sphinx sphinx_rtd_theme \
+  && rm -rf /var/cache/* \
+  && rm -rf /root/.cache/*	
+  
+
+RUN cd /usr/bin \
+  # && ln -sf easy_install-3.5 easy_install \
+  && ln -sf python3 python \
+  && ln -sf pip3 pip
+  
 
 # DANGER: this will vary for different distributions, particularly the
 # `linuxmusl` suffix.  Alpine linux is a musl libc based distribution, for other
